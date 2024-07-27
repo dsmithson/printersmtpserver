@@ -13,7 +13,7 @@ The application can be configured using command-line parameters or environment v
 
 ### Command-Line Parameters
 
-- `--SmtpPort`: The port on which the SMTP server will listen. Defaults to 25.
+- `--SmtpPort`: The port on which the SMTP server will listen. Defaults to 25 for executable, and 25000 for the docker container (kubernetes doesn't like ports below 1024).
 - `--OutputPath`: The path where the attachments will be stored. This parameter is required.
 
 ### Environment Variables
