@@ -1,0 +1,9 @@
+
+version: '3.4'
+
+services:
+  smtpserverservice:
+    image: smtpserverservice
+    build:
+      context: .
+      dockerfile: SmtpServerService/SmtpServerService/Dockerfile
