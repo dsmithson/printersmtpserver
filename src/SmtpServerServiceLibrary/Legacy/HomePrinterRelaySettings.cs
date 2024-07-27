@@ -18,21 +18,21 @@ namespace SmtpServerServiceLibrary.Legacy
             return new HomePrinterRelaySettings()
             {
                 FilePath = GetSetting(args, "OutputPath"),
-                SmtpPort = GetSettingInt(args, "SmtpPort")
+                SmtpPort = GetSettingInt(args, "SmtpPort", 25)
             };
         }
 
-        private static int GetSettingInt(string[] args, string settingName)
+        private static int GetSettingInt(string[] args, string settingName, int defaultValue = 0)
         {
-            string str = GetSetting(args, settingName);
+            string str = GetSetting(args, settingName, defaultValue.ToString());
             if(!int.TryParse(str, out int val))
             {
-                return 0;
+                return defaultValue;
             }
             return val;
         }
 
-        private static string GetSetting(string[] args, string settingName)
+        private static string GetSetting(string[] args, string settingName, string defaultValue = null)
         {
             // Step 1: Get setting from args
             var argListParamName = "--" + settingName;
@@ -53,7 +53,7 @@ namespace SmtpServerServiceLibrary.Legacy
             }
 
             // Step 3: Return default
-            return null;
+            return defaultValue;
         }
     }
 }

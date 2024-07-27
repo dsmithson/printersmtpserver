@@ -13,10 +13,11 @@ COPY --from=build /src/SmtpServerService/bin/Release/net8.0/publish/ .
 
 # Create the attachments directory and set the environment variable
 ENV SMTP_OUTPUTPATH=/attachments
+ENV SMTP_SMTPPORT=25000
 RUN mkdir -p /attachments
 
 # Expose port 25
-EXPOSE 25
+EXPOSE 25000
 
 # Command to run the application
 ENTRYPOINT ["./SmtpServerService"]
