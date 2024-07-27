@@ -45,7 +45,7 @@ jobs:
         with:
           context: .
           file: build/Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64,linux/arm
           tags: |
             your-dockerhub-username/printersmtpserver:latest
             your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }}
@@ -57,10 +57,10 @@ jobs:
           docker manifest create your-dockerhub-username/printersmtpserver:latest \
             --amend your-dockerhub-username/printersmtpserver:amd64 \
             --amend your-dockerhub-username/printersmtpserver:arm64 \
-            --amend your-dockerhub-username/printersmtpserver:arm/v7
+            --amend your-dockerhub-username/printersmtpserver:arm
           docker manifest push your-dockerhub-username/printersmtpserver:latest
           docker manifest create your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }} \
             --amend your-dockerhub-username/printersmtpserver:amd64 \
             --amend your-dockerhub-username/printersmtpserver:arm64 \
-            --amend your-dockerhub-username/printersmtpserver:arm/v7
+            --amend your-dockerhub-username/printersmtpserver:arm
           docker manifest push your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }}
