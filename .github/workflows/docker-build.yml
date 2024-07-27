@@ -40,21 +40,22 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: build/Dockerfile
           push: true
           tags: |
-            dsmithson/printersmtpserver:latest
-            dsmithson/printersmtpserver:${{ env.SHORT_SHA }}
+            your-dockerhub-username/printersmtpserver:latest
+            your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
 
       - name: Create and push manifest
         run: |
-          docker manifest create dsmithson/printersmtpserver:latest \
-            --amend dsmithson/printersmtpserver:amd64 \
-            --amend dsmithson/printersmtpserver:arm64 \
-            --amend dsmithson/printersmtpserver:arm/v7
-          docker manifest push dsmithson/printersmtpserver:latest
-          docker manifest create dsmithson/printersmtpserver:${{ env.SHORT_SHA }} \
-            --amend dsmithson/printersmtpserver:amd64 \
-            --amend dsmithson/printersmtpserver:arm64 \
-            --amend dsmithson/printersmtpserver:arm/v7
-          docker manifest push dsmithson/printersmtpserver:${{ env.SHORT_SHA }}
+          docker manifest create your-dockerhub-username/printersmtpserver:latest \
+            --amend your-dockerhub-username/printersmtpserver:amd64 \
+            --amend your-dockerhub-username/printersmtpserver:arm64 \
+            --amend your-dockerhub-username/printersmtpserver:arm/v7
+          docker manifest push your-dockerhub-username/printersmtpserver:latest
+          docker manifest create your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }} \
+            --amend your-dockerhub-username/printersmtpserver:amd64 \
+            --amend your-dockerhub-username/printersmtpserver:arm64 \
+            --amend your-dockerhub-username/printersmtpserver:arm/v7
+          docker manifest push your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }}
