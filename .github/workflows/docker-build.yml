@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [arm64] #[amd64, arm64, arm]
-
+        arch: [amd64, arm64, arm/v7]
+        
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -24,12 +24,10 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: arm64 #,amd64,arm,arm/v7
+          platforms: all # This will automatically enable all emulated platforms
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/arm64 #,linux/amd64,linux/arm,linux/arm/v7
 
       - name: Log in to Docker Hub
         if: github.event_name != 'pull_request'
@@ -42,23 +40,40 @@ jobs:
         id: vars
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Build Docker image
+      - name: Build and Push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           file: build/Dockerfile
-          platforms: linux/arm64 #,linux/amd64
+          platforms: ${{ matrix.arch }}
           tags: |
-            your-dockerhub-username/printersmtpserver:latest
-            your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }}
+            dsmithson/printersmtpserver:latest
+            dsmithson/printersmtpserver:${{ matrix.arch }}-latest
+            dsmithson/printersmtpserver:${{ matrix.arch }}-${{ env.SHORT_SHA }}
           push: ${{ github.event_name != 'pull_request' }}
 
-      - name: Create and push manifest
-        if: github.event_name != 'pull_request'
+  create-manifest:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Create and push manifest for latest
         run: |
-          docker manifest create your-dockerhub-username/printersmtpserver:latest \
-            --amend your-dockerhub-username/printersmtpserver:arm64
-          docker manifest push your-dockerhub-username/printersmtpserver:latest
-          docker manifest create your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }} \
-            --amend your-dockerhub-username/printersmtpserver:arm64 \
-          docker manifest push your-dockerhub-username/printersmtpserver:${{ env.SHORT_SHA }}
+          docker manifest create dsmithson/printersmtpserver:latest \
+            --amend dsmithson/printersmtpserver:amd64-latest \
+            --amend dsmithson/printersmtpserver:arm64-latest \
+            --amend dsmithson/printersmtpserver:arm-v7-latest
+          docker manifest push dsmithson/printersmtpserver:latest
+
+      - name: Create and push manifest for commit SHA
+        run: |
+          docker manifest create dsmithson/printersmtpserver:${{ env.SHORT_SHA }} \
+            --amend dsmithson/printersmtpserver:amd64-${{ env.SHORT_SHA }} \
+            --amend dsmithson/printersmtpserver:arm64-${{ env.SHORT_SHA }} \
+            --amend dsmithson/printersmtpserver:arm-v7-${{ env.SHORT_SHA }}
+          docker manifest push dsmithson/printersmtpserver:${{ env.SHORT_SHA }}
