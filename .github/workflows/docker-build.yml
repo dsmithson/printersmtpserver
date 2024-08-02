@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [amd64, arm64, arm/v7]
-        
+        arch: [amd64, arm64, armv7]  # Updated to use armv7 instead of arm/v7
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -24,7 +24,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: all # This will automatically enable all emulated platforms
+          platforms: all  # Automatically supports all platforms
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -45,7 +45,7 @@ jobs:
         with:
           context: .
           file: build/Dockerfile
-          platforms: ${{ matrix.arch }}
+          platforms: linux/${{ matrix.arch }}
           tags: |
             dsmithson/printersmtpserver:latest
             dsmithson/printersmtpserver:${{ matrix.arch }}-latest
@@ -67,7 +67,7 @@ jobs:
           docker manifest create dsmithson/printersmtpserver:latest \
             --amend dsmithson/printersmtpserver:amd64-latest \
             --amend dsmithson/printersmtpserver:arm64-latest \
-            --amend dsmithson/printersmtpserver:arm-v7-latest
+            --amend dsmithson/printersmtpserver:armv7-latest
           docker manifest push dsmithson/printersmtpserver:latest
 
       - name: Create and push manifest for commit SHA
@@ -75,5 +75,5 @@ jobs:
           docker manifest create dsmithson/printersmtpserver:${{ env.SHORT_SHA }} \
             --amend dsmithson/printersmtpserver:amd64-${{ env.SHORT_SHA }} \
             --amend dsmithson/printersmtpserver:arm64-${{ env.SHORT_SHA }} \
-            --amend dsmithson/printersmtpserver:arm-v7-${{ env.SHORT_SHA }}
+            --amend dsmithson/printersmtpserver:armv7-${{ env.SHORT_SHA }}
           docker manifest push dsmithson/printersmtpserver:${{ env.SHORT_SHA }}
