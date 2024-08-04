@@ -41,8 +41,8 @@ try
     }
 
     Log.Information("Starting up...");
-    Log.Information("Listening for SMTP requests on port {0}", settings.SmtpPort);
-    Log.Information("Email attachments will be saved to {0}", settings.FilePath);
+    Log.Information("Listening for SMTP requests on port {smtpPort}", settings.SmtpPort);
+    Log.Information("Email attachments will be saved to {filePath}", settings.FilePath);
     var relayServer = new HomePrinterRelay(settings);
     relayServer.Startup();
 

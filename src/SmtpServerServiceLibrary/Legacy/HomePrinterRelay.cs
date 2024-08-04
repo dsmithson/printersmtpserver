@@ -71,7 +71,7 @@ namespace SmtpServerServiceLibrary.Legacy
             var writer = new StreamWriter(stream);
 
             string clientIP = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-            Log.Information("Client connected - {0}", clientIP);
+            Log.Information("Client connected - {clientIP}", clientIP);
             await WriteLine(writer, "220 localhost -- Knightware proxy server");
 
             using (MemoryStream readBackBuffer = new MemoryStream())
@@ -84,7 +84,7 @@ namespace SmtpServerServiceLibrary.Legacy
                         if (string.IsNullOrEmpty(msg) || msg.StartsWith("QUIT") || msg.StartsWith("quit"))
                         {
                             //Connection lost.  Close now
-                            Log.Information("Closing connection to {0}", clientIP);
+                            Log.Information("Closing connection to {clientIP}", clientIP);
                             client.Close();
                             break;
                         }
@@ -192,7 +192,7 @@ namespace SmtpServerServiceLibrary.Legacy
             }
             catch (Exception ex)
             {
-                Log.Warning("{0} occurred while processing email: {1}", ex.GetType().Name, ex.Message);
+                Log.Warning("exception occurred while processing email: {exception}", ex);
             }
             finally
             {
@@ -208,7 +208,7 @@ namespace SmtpServerServiceLibrary.Legacy
 
         private async Task WriteLine(StreamWriter writer, string message)
         {
-            Log.Debug("Sending: {0}", message);
+            Log.Debug("Sending: {msg}", message);
             await writer.WriteLineAsync(message);
             await writer.FlushAsync();
         }
@@ -218,7 +218,7 @@ namespace SmtpServerServiceLibrary.Legacy
             string response = await reader.ReadLineAsync();
 
             if (!string.IsNullOrEmpty(response))
-                Log.Debug("Received: {0}", response);
+                Log.Debug("Received: {msg}", response);
 
             return response;
         }
