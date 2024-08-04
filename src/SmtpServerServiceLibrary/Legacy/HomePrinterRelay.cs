@@ -69,7 +69,9 @@ namespace SmtpServerServiceLibrary.Legacy
             var stream = client.GetStream();
             var reader = new StreamReader(stream);
             var writer = new StreamWriter(stream);
-
+            writer.NewLine = "\r\n"; // required to work in both Unix and Windows environments
+            string saveToSubFolderName = "";
+            
             string clientIP = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
             Log.Information("Client connected - {clientIP}", clientIP);
             await WriteLine(writer, "220 localhost -- Knightware proxy server");
