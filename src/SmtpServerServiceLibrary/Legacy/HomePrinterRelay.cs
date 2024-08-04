@@ -69,9 +69,11 @@ namespace SmtpServerServiceLibrary.Legacy
             var stream = client.GetStream();
             var reader = new StreamReader(stream);
             var writer = new StreamWriter(stream);
-
+            writer.NewLine = "\r\n"; // required to work in both Unix and Windows environments
+            string saveToSubFolderName = "";
+            
             string clientIP = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-            Log.Information("Client connected - {0}", clientIP);
+            Log.Information("Client connected - {clientIP}", clientIP);
             await WriteLine(writer, "220 localhost -- Knightware proxy server");
 
             using (MemoryStream readBackBuffer = new MemoryStream())
@@ -84,7 +86,7 @@ namespace SmtpServerServiceLibrary.Legacy
                         if (string.IsNullOrEmpty(msg) || msg.StartsWith("QUIT") || msg.StartsWith("quit"))
                         {
                             //Connection lost.  Close now
-                            Log.Information("Closing connection to {0}", clientIP);
+                            Log.Information("Closing connection to {clientIP}", clientIP);
                             client.Close();
                             break;
                         }
@@ -99,7 +101,11 @@ namespace SmtpServerServiceLibrary.Legacy
                         {
                             //This line will have the display name, next line will have email address
                             string emailTo = CleanEmailString(msg, "RCPT TO:");
-                            //TODO: Do I need the send-to email?
+                            Log.Debug("Received email to: {emailTo}", emailTo);
+                            
+                            // Set a folder name based on the recipient email address
+                            saveToSubFolderName = ConvertEmailRecipientToFolderName(emailTo);
+
                             await WriteLine(writer, "250 OK");
                         }
                         else if (msg.StartsWith("MAIL FROM:"))
@@ -129,7 +135,7 @@ namespace SmtpServerServiceLibrary.Legacy
                             await WriteLine(writer, "250 OK");
 
                             //Do actual data processing on a background thread
-                            ThreadPool.QueueUserWorkItem((WaitCallback)((state) => ProcessData(tempFile)));
+                            ThreadPool.QueueUserWorkItem((WaitCallback)((state) => ProcessData(tempFile, saveToSubFolderName)));
                         }
                         else
                         {
@@ -143,15 +149,29 @@ namespace SmtpServerServiceLibrary.Legacy
                 }
             }
 
-            Log.Information("Client disconnected - {0}", clientIP);
+            Log.Information($"Client disconnected - {clientIP}", clientIP);
         }
 
-        private void ProcessData(string fileName)
+        private string ConvertEmailRecipientToFolderName(string email)
+        {
+            string name = string.Join(" ", email.Split(Path.GetInvalidPathChars()));
+            if (name.Length == 0)
+            {
+                name = "Unknown";
+            }
+            return name;
+        }
+
+        private void ProcessData(string fileName, string saveToSubFolderName = "")
         {
             const string startLineText = "Content-Transfer-Encoding: base64";
 
             try
             {
+                string savePath = Path.Combine(settings.FilePath, saveToSubFolderName);
+                if (!Directory.Exists(savePath))
+                    Directory.CreateDirectory(savePath);
+
                 bool startTextFound = false;
                 bool isReading = false;
                 StringBuilder builder = new StringBuilder();
@@ -178,7 +198,7 @@ namespace SmtpServerServiceLibrary.Legacy
                             string newFileName = string.Format("{0}-{1:D2}-{2:D2} {3:D2}-{4:D2}-{5:D2} - Scan.pdf",
                                 now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second);
 
-                            string newFile = Path.Combine(settings.FilePath, newFileName);
+                            string newFile = Path.Combine(savePath, newFileName);
                             File.WriteAllBytes(newFile, Convert.FromBase64String(builder.ToString()));
                             break;
                         }
@@ -192,7 +212,7 @@ namespace SmtpServerServiceLibrary.Legacy
             }
             catch (Exception ex)
             {
-                Log.Warning("{0} occurred while processing email: {1}", ex.GetType().Name, ex.Message);
+                Log.Warning("exception occurred while processing email: {exception}", ex);
             }
             finally
             {
@@ -208,7 +228,7 @@ namespace SmtpServerServiceLibrary.Legacy
 
         private async Task WriteLine(StreamWriter writer, string message)
         {
-            Log.Debug("Sending: {0}", message);
+            Log.Debug("Sending: {msg}", message);
             await writer.WriteLineAsync(message);
             await writer.FlushAsync();
         }
@@ -218,7 +238,7 @@ namespace SmtpServerServiceLibrary.Legacy
             string response = await reader.ReadLineAsync();
 
             if (!string.IsNullOrEmpty(response))
-                Log.Debug("Received: {0}", response);
+                Log.Debug("Received: {msg}", response);
 
             return response;
         }
